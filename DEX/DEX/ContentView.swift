@@ -15,6 +15,8 @@ struct ContentView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \Pokemon.id, ascending: true)],
         animation: .default)
     private var pokedex: FetchedResults<Pokemon>
+    
+    let fetcher = FetchService()
 
     var body: some View {
         NavigationView {
@@ -34,8 +36,35 @@ struct ContentView: View {
                 }
                 ToolbarItem {
                     Button("Add Item", systemImage: "plus") {
-                      
+                        getPokemon()
                     }
+                }
+            }
+        }
+    }
+    
+    private func getPokemon() {
+        Task {
+            for id in 1..<152 {
+                do {
+                    let fetchedPokemon = try await fetcher.fetchPokemon(id)
+                    
+                    let pokemon = Pokemon(context: viewContext)
+                    pokemon.id = Int16(fetchedPokemon.id)
+                    pokemon.name = fetchedPokemon.name
+                    pokemon.types = fetchedPokemon.types
+                    pokemon.attack = Int16(fetchedPokemon.attack)
+                    pokemon.hp = Int16(fetchedPokemon.hp)
+                    pokemon.defense = Int16(fetchedPokemon.defense)
+                    pokemon.specialDefense = Int16(fetchedPokemon.specialDefense)
+                    pokemon.specialAttack = Int16(fetchedPokemon.specialAttack)
+                    pokemon.speed = Int16(fetchedPokemon.speed)
+                    pokemon.sprite = fetchedPokemon.sprite
+                    pokemon.shiny = fetchedPokemon.shiny
+                    
+                    try viewContext.save()
+                } catch {
+                    print(error)
                 }
             }
         }
