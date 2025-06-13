@@ -26,6 +26,8 @@ struct FetchedPokemon: Decodable {
         case types
         case stats
         case sprites
+        case frontDefault
+        case frontShiny
     }
 
     struct TypeElement: Decodable {
@@ -37,17 +39,11 @@ struct FetchedPokemon: Decodable {
 
     struct StatElement: Decodable {
         let baseStat: Int
-         let stat: StatName
+        let stat: StatName
 
-         struct StatName: Decodable {
-             let name: String
-         }
-    }
-
-    struct SpriteContainer: Decodable {
-        let front_default: URL
-        let front_shiny: URL
-        
+        struct StatName: Decodable {
+            let name: String
+        }
     }
 
     init(from decoder: Decoder) throws {
@@ -56,11 +52,9 @@ struct FetchedPokemon: Decodable {
         id = try container.decode(Int.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
 
-        // Parse types
         let typeElements = try container.decode([TypeElement].self, forKey: .types)
         types = typeElements.map { $0.type.name }
 
-        // Parse stats
         let statElements = try container.decode([StatElement].self, forKey: .stats)
         var statDict: [String: Int] = [:]
         for stat in statElements {
@@ -74,13 +68,8 @@ struct FetchedPokemon: Decodable {
         specialDefense = statDict["special-defense"] ?? 0
         speed = statDict["speed"] ?? 0
 
-        // Parse sprites
-        if let spriteContainer = try? container.decode(SpriteContainer.self, forKey: .sprites) {
-            sprite = spriteContainer.front_default
-            shiny = spriteContainer.front_shiny
-        } else {
-            sprite = URL(string: "https://example.com/default.png")!
-            shiny = URL(string: "https://example.com/shiny.png")!
-        }
+        let spriteContainer = try container.nestedContainer(keyedBy: CodingKeys.self, forKey: .sprites)
+        sprite = try spriteContainer.decode(URL.self, forKey: .frontDefault)
+        shiny = try spriteContainer.decode(URL.self, forKey: .frontShiny)
     }
 }
