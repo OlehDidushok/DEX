@@ -53,7 +53,11 @@ struct FetchedPokemon: Decodable {
         name = try container.decode(String.self, forKey: .name)
 
         let typeElements = try container.decode([TypeElement].self, forKey: .types)
-        types = typeElements.map { $0.type.name }
+        var decodedTypes = typeElements.map { $0.type.name }
+        if decodedTypes.count == 2 && decodedTypes[0] == "normal" {
+            decodedTypes.swapAt(0, 1)
+        }
+        types = decodedTypes
 
         let statElements = try container.decode([StatElement].self, forKey: .stats)
         var statDict: [String: Int] = [:]
